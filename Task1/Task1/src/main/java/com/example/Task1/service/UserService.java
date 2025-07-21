@@ -28,6 +28,7 @@ public class UserService {
     // converts data from excel file to list of users and will save
     public void save(MultipartFile file) throws IOException {
         System.out.println("inside save function of UserController..");
+        System.out.println("file name is "+file.getOriginalFilename());
        List<User> usersList = Helper.convertExcelToListOfUser(file.getInputStream());
        this.userRepository.saveAll(usersList);
     }
