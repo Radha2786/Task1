@@ -2,6 +2,8 @@ package com.example.Task1.helper;
 
 import com.example.Task1.entity.User;
 import com.example.Task1.entity.UserType;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
 import org.apache.commons.math3.stat.descriptive.summary.Product;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -11,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,6 +33,24 @@ public class Helper {
         }
     }
 
+    // check that file is of CSV format or not
+    public static boolean checkCSVFormat(MultipartFile file){
+        String contentType = file.getContentType();
+        
+        if(contentType.equals("text/csv") || contentType.equals("application/csv")){
+            System.out.println("true inside CSV helper check");
+            return true;
+        }else{
+            System.out.println("false inside CSV helper check");
+            return false;
+        }
+    }
+
+    // check if file is either Excel or CSV
+    public static boolean checkFileFormat(MultipartFile file){
+        return checkExcelFormat(file) || checkCSVFormat(file);
+    }
+
     // converts excel to list of users
     public static List<User> convertExcelToListOfUser(InputStream is) throws IOException {
 //        System.out.println("input stream is...." + is);
@@ -41,14 +62,15 @@ public class Helper {
 //        }
 
         try {
-            System.out.println("inside helper convert method..");
+//            System.out.println("inside helper convert method..");
 
             XSSFWorkbook workbook = new XSSFWorkbook(is);
 
-            XSSFSheet sheet = workbook.getSheet("datanew");
+            // Get the first sheet (more dynamic approach)
+            XSSFSheet sheet = workbook.getSheetAt(0);
 
             if (sheet == null) {
-                System.err.println("Sheet 'Users' does not exist in the workbook.");
+                System.err.println("No sheets found in the workbook.");
                 return list;
             }
 
@@ -122,6 +144,64 @@ public class Helper {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return list;
+    }
+
+    // converts CSV to list of users
+    public static List<User> convertCSVToListOfUser(InputStream is) throws IOException {
+        List<User> list = new ArrayList<>();
+        
+        try (CSVReader csvReader = new CSVReader(new InputStreamReader(is))) {
+            List<String[]> records = csvReader.readAll();
+            
+            // Skip header row if present
+            boolean isFirstRow = true;
+            
+            for (String[] record : records) {
+                if (isFirstRow) {
+                    isFirstRow = false;
+                    // Check if first row contains headers (non-numeric data in first column)
+                    if (record.length > 0 && !record[0].matches("\\d+")) {
+                        continue; // Skip header row
+                    }
+                }
+                
+                if (record.length >= 5) { // Ensure we have all required fields
+                    User user = new User();
+                    boolean isValidUser = true;
+                    
+                    try {
+                        // CSV format: name, email, userType, password, contactNumber
+                        user.setName(record[0].trim());
+                        user.setEmail(record[1].trim());
+                        
+                        String userTypeStr = record[2].trim().toUpperCase();
+                        user.setUserType(UserType.valueOf(userTypeStr));
+                        
+                        user.setPassword(record[3].trim());
+                        user.setContactNumber(record[4].trim());
+                        
+                    } catch (IllegalArgumentException ex) {
+                        System.err.println("Invalid userType in CSV: " + record[2]);
+                        isValidUser = false;
+                    } catch (Exception ex) {
+                        System.err.println("Error parsing CSV row: " + String.join(",", record));
+                        isValidUser = false;
+                    }
+                    
+                    if (isValidUser) {
+                        list.add(user);
+                    }
+                } else {
+                    System.err.println("Insufficient data in CSV row: " + String.join(",", record));
+                }
+            }
+            
+        } catch (CsvException e) {
+            System.err.println("Error reading CSV file: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         return list;
     }
 }
