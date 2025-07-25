@@ -12,8 +12,6 @@ public class Task1Application {
 
 }
 
-//
-//
 //	CREATE TABLE users (
 //		id SERIAL PRIMARY KEY,
 //		name VARCHAR(100) NOT NULL,
@@ -22,7 +20,5 @@ public class Task1Application {
 //	contact_number VARCHAR(15),
 //	user_type VARCHAR(20)
 //);
-//
 //		select * from users;
-//
 //		CREATE TYPE user_type_enum AS ENUM ('admin', 'user', 'employee');

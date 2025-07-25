@@ -1,4 +1,6 @@
 package com.example.Task1.controller;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.example.Task1.dto.LoginRequest;
 import com.example.Task1.dto.LoginResponse;
@@ -26,6 +28,8 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<String> handleEnumErrors(HttpMessageNotReadableException ex) {
         String msg = ex.getMostSpecificCause().getMessage();
@@ -49,6 +53,7 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@Valid @RequestBody User user) {
         userService.register(user);
+        logger.info("User registered successfully: {}", user.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully!");
     }
 

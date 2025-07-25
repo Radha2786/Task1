@@ -64,8 +64,7 @@ public class UserService {
     // converts data from excel file to list of users and will save
     @Transactional
     public void save(MultipartFile file) throws IOException {
-        System.out.println("inside save function of UserService..");
-        System.out.println("file name is " + file.getOriginalFilename());
+        // System.out.println("file name is " + file.getOriginalFilename()); 
         
         List<User> usersList;
         

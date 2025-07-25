@@ -17,18 +17,22 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Helper {
+
+    private static final Logger logger = LoggerFactory.getLogger(Helper.class);
 
     // check that file is of excel file or not
     public static boolean checkExcelFormat(MultipartFile file){
         String contentType = file.getContentType();
 
         if(contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")){
-            System.out.println("true inside helper check");
+            logger.info("File format is valid Excel format.");
             return true;
         }else{
-            System.out.println("false inside helper check");
+            logger.warn("File format is invalid. Expected: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             return false;
         }
     }
@@ -38,10 +42,10 @@ public class Helper {
         String contentType = file.getContentType();
         
         if(contentType.equals("text/csv") || contentType.equals("application/csv")){
-            System.out.println("true inside CSV helper check");
+            logger.info("File format is valid CSV format.");
             return true;
         }else{
-            System.out.println("false inside CSV helper check");
+            logger.warn("File format is invalid. Expected: text/csv or application/csv");
             return false;
         }
     }
@@ -62,19 +66,16 @@ public class Helper {
 //        }
 
         try {
-//            System.out.println("inside helper convert method..");
-
             XSSFWorkbook workbook = new XSSFWorkbook(is);
 
             // Get the first sheet (more dynamic approach)
             XSSFSheet sheet = workbook.getSheetAt(0);
 
             if (sheet == null) {
-                System.err.println("No sheets found in the workbook.");
                 return list;
             }
 
-            System.out.println("sheet is......" + sheet);
+            // System.out.println("sheet is......" + sheet);
 
             int rowNumber = 0;
 
@@ -96,8 +97,6 @@ public class Helper {
 
                 while (cells.hasNext()) {
                     Cell cell = cells.next();
-                    System.out.println("cid is...." + cid);
-                    System.out.println("cell is...." + cell);
                     switch (cid) {
 //                        case 0:
 //                            u.setId((int) cell.getNumericCellValue());
@@ -118,12 +117,11 @@ public class Helper {
 //                          u.setUserType(cell.getCellType());
                         case 4:
                             String userTypeStr = cell.getStringCellValue().toUpperCase();
-                            System.out.println("userTypeStr is...." + userTypeStr);
-//                            System.out.println("UserType.valueOf(userTypeStr) is...." + UserType.valueOf(userTypeStr));
+                            logger.info("userTypeStr is: {}", userTypeStr);
                             try {
                                 u.setUserType(UserType.valueOf(userTypeStr));
                             } catch (IllegalArgumentException ex) {
-                                System.err.println("Invalid userType at row " + row.getRowNum() + ": " + userTypeStr);
+                                logger.error("Invalid userType at row {}: {}", row.getRowNum(), userTypeStr);
                                 isValidUser = false; // Mark invalid
 //                                continue; // skip this user or handle as invalid
                             }
@@ -134,7 +132,7 @@ public class Helper {
                     }
                     cid++;
                 }
-                System.out.println(u.getUserType());
+                logger.info("UserType is: {}", u.getUserType());
                 if (isValidUser) {
                     list.add(u);
                 }
@@ -182,10 +180,10 @@ public class Helper {
                         user.setContactNumber(record[4].trim());
                         
                     } catch (IllegalArgumentException ex) {
-                        System.err.println("Invalid userType in CSV: " + record[2]);
+                        logger.error("Invalid userType in CSV: {}", record[2]);
                         isValidUser = false;
                     } catch (Exception ex) {
-                        System.err.println("Error parsing CSV row: " + String.join(",", record));
+                        logger.error("Error parsing CSV row: {}", String.join(",", record));
                         isValidUser = false;
                     }
                     
@@ -193,13 +191,12 @@ public class Helper {
                         list.add(user);
                     }
                 } else {
-                    System.err.println("Insufficient data in CSV row: " + String.join(",", record));
+                    logger.error("Insufficient data in CSV row: {}", String.join(",", record));
                 }
             }
             
         } catch (CsvException e) {
-            System.err.println("Error reading CSV file: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error reading CSV file: {}", e.getMessage());
         }
         
         return list;

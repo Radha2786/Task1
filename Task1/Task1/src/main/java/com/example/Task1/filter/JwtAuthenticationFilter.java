@@ -15,8 +15,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.Spring;
+
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -39,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 email = jwtUtil.extractEmail(jwt);
                 userType = jwtUtil.extractUserType(jwt);
             } catch (Exception e) {
-                System.err.println("Invalid JWT token: " + e.getMessage());
+                logger.error("invalid jwt token: {}", e.getMessage());
             }
         }
 
@@ -50,8 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(email, null, Arrays.asList(authority));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
-
-//             Line 44: Validates the JWT token (checks signature, expiration, etc.)
+// Line 44: Validates the JWT token (checks signature, expiration, etc.)
 // Line 45: Creates a Spring Security authority with "ROLE_" prefix
 // If userType = "ADMIN", creates "ROLE_ADMIN"
 // Line 46-47: Creates authentication token with user's email and role
@@ -60,4 +66,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         filterChain.doFilter(request, response);
     }
+    // CRITICAL: Passes the request to the next filter/controller
+// At this point, Spring Security knows who the user is and what role they have
 }
